@@ -1,0 +1,66 @@
+---
+title: "Quality Improvement Stats"
+author: "Vanessa Sochat"
+date: "August 4, 2016"
+output: html_document
+---
+
+## Testing Impact of Clinical Intervention
+
+We are testing the null hypothesis that an intervention, specifically, some procedural change for the clincian, had no effect on quality of care. Specifically, we are using correctness of discharge reports as a measure of this effect. A more correct report is indicative of an improvement in treatment.
+
+If the pre- and post- values are not significantly different, we can come to the conclusion that the observed results are likely not due to chance.
+
+### Distribution of the Scores and Choosing a Test
+I first thought that we couldn't do a T-test, but seeing that we have actual data (and not just the final percentages) a T-test is the best way to compare if the distribution before is different from the distribution after. The key will be applying the correct transformation to the data before we do the test (think of this like a normalization). 
+
+#### Reading in Data
+
+Let's first read in our data.
+
+```{r}
+
+anticoag = read.csv("anticoagulation.csv")
+head(anticoag)
+```
+
+You'll notice that I converted the .xls to a comma separated value (csv) file, and deleted the calculations that were done in Excel. We are going to do them here! Here is how we see our columns:
+
+```{r}
+colnames(anticoag)
+```
+
+Let's calculate a new column, the percentage (or score) for each timepoint.
+
+```{r}
+anticoag$pre_percentage = anticoag$pre_points / anticoag$pre_total_possible
+anticoag$post_percentage = anticoag$post_points / anticoag$post_possible
+head(anticoag)
+```
+
+You can see that we get better precision than we did with Excel, "better" meaning more consistent with decimal places, etc.
+
+#### Preparing for T-Test
+We want to compare the list of before percentages with after percentages to determine if they are significantly different! Let's put those values into a variable:
+
+```{r}
+before = anticoag$pre_percentage[!is.na(anticoag$pre_percentage)]
+after = anticoag$post_percentage[!is.na(anticoag$post_percentage)]
+```
+
+#### Standardizing Data
+We can transform the data by taking the log. We will use the function sapply to apply a log transformation to each element in the list:
+
+```{r}
+before.log = sapply(before,log)
+after.log = sapply(before,log)
+```
+
+#### Performing the T-Test
+We can now use a T-Test to assess for differences. This is two-sided, 
+
+```{r}
+t.test(before.log, after.log,alternative = c("two.sided"))
+```
+
+This shows us that the means are not significantly different.
