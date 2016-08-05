@@ -11,15 +11,13 @@ We are testing the null hypothesis that an intervention, specifically, some proc
 
 If the pre- and post- values are not significantly different, we can come to the conclusion that the observed results are likely not due to chance.
 
-### Distribution of the Scores and Choosing a Test
-I first thought that we couldn't do a T-test, but seeing that we have actual data (and not just the final percentages) a T-test is the best way to compare if the distribution before is different from the distribution after. The key will be applying the correct transformation to the data before we do the test (think of this like a normalization). 
-
 #### Reading in Data
 
 Let's first read in our data.
 
 ```{r}
-
+#install.packages('exactRankTests')
+library(exactRankTests)
 anticoag = read.csv("anticoagulation.csv")
 head(anticoag)
 ```
@@ -40,27 +38,28 @@ head(anticoag)
 
 You can see that we get better precision than we did with Excel, "better" meaning more consistent with decimal places, etc.
 
-#### Preparing for T-Test
-We want to compare the list of before percentages with after percentages to determine if they are significantly different! Let's put those values into a variable:
+#### Filtering out NA values
+We want to compare the list of before percentages with after percentages to determine if they are significantly different, but some of our data has NA values! Let's put those values into a variable, and remove the NAs as we do this:
 
 ```{r}
 before = anticoag$pre_percentage[!is.na(anticoag$pre_percentage)]
 after = anticoag$post_percentage[!is.na(anticoag$post_percentage)]
 ```
 
-#### Standardizing Data
-We can transform the data by taking the log. We will use the function sapply to apply a log transformation to each element in the list:
+#### Distribution of the Scores and Choosing a Test
+There are tests that you can do to determine if your data is normally distributed, but sometimes it is sufficient to just look at it. I can look at the numbers (my there are a lot of 1's!) or the plots below to see that we definitely do not have normally distributed data:
 
 ```{r}
-before.log = sapply(before,log)
-after.log = sapply(before,log)
+hist(before,breaks=5,col="blue",main="Pre-Intervention Anticoagulation Percentage Scores")
+hist(after,breaks=5,col="pink",main="Post-Intervention Anticoagulation Percentage Scores")
 ```
 
-#### Performing the T-Test
-We can now use a T-Test to assess for differences. This is two-sided, 
+
+##### Performing the Test
+We can now use a permutation test to assess for differences. This is two-sided:
 
 ```{r}
-t.test(before.log, after.log,alternative = c("two.sided"))
+perm.test(before,after,alternative="two.sided",exact=TRUE)
 ```
 
 This shows us that the means are not significantly different.
