@@ -1,0 +1,65 @@
+---
+title: "Quality Improvement Stats"
+author: "Vanessa Sochat"
+date: "August 4, 2016"
+output: html_document
+---
+
+## Testing Impact of Clinical Intervention
+
+We are testing the null hypothesis that an intervention, specifically, some procedural change for the clincian, had no effect on quality of care. Specifically, we are using correctness of discharge reports as a measure of this effect. A more correct report is indicative of an improvement in treatment.
+
+If the pre- and post- values are not significantly different, we can come to the conclusion that the observed results are likely not due to chance.
+
+#### Reading in Data
+
+Let's first read in our data.
+
+```{r}
+#install.packages('exactRankTests')
+library(exactRankTests)
+dm = read.csv("dm.csv")
+head(dm)
+```
+
+You'll notice that I converted the .xls to a comma separated value (csv) file, and deleted the calculations that were done in Excel. We are going to do them here! Here is how we see our columns:
+
+```{r}
+colnames(dm)
+```
+
+Let's calculate a new column, the percentage (or score) for each timepoint.
+
+```{r}
+dm$pre_percentage = dm$pre_dm_points / dm$pre_dm_total_possible
+dm$post_percentage = dm$post_dm_points / dm$post_dm_possible
+head(dm)
+```
+
+You can see that we get better precision than we did with Excel, "better" meaning more consistent with decimal places, etc.
+
+#### Filtering out NA values
+We want to compare the list of before percentages with after percentages to determine if they are significantly different, but some of our data has NA values! Let's put those values into a variable, and remove the NAs as we do this:
+
+```{r}
+before = dm$pre_percentage[!is.na(dm$pre_percentage)]
+after = dm$post_percentage[!is.na(dm$post_percentage)]
+```
+
+#### Distribution of the Scores and Choosing a Test
+There are tests that you can do to determine if your data is normally distributed, but sometimes it is sufficient to just look at it. I can look at the numbers (my there are a lot of 1's!) or the plots below to see that we definitely do not have normally distributed data:
+
+```{r}
+hist(before,breaks=5,col="blue",main="Pre-Intervention Diabetes Management Percentage Scores")
+hist(after,breaks=5,col="pink",main="Post-Intervention Diabetes Management Percentage Scores")
+```
+
+
+##### Performing the Test
+We can now use a permutation test to assess for differences. This is two-sided:
+
+```{r}
+perm.test(before,after,alternative="two.sided",exact=TRUE)
+```
+
+This shows us that the means are not significantly different.
